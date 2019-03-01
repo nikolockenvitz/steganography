@@ -1,0 +1,44 @@
+body {
+	background: #333;
+	color: #ccc;
+	height: 100%;
+}
+
+div {
+	text-align: center;
+	vertical-align: top;
+	margin: 0;
+	display: inline-block;
+}
+
+.box {
+	margin: 1vh;
+	padding: 1vh;
+	display: block;
+}
+
+.file-upload {
+	margin-left: 1vw;
+	margin-right: 1vw;
+}
+
+#info-button {
+	font-size: 1.5em;
+	cursor: pointer;
+}
+#info-button:hover {
+	color: #fff;
+}
+
+canvas {
+	height: 200px;
+	border: 1px solid #ccc;
+	margin: 1vh;
+}
+
+textarea {
+	border: 1px solid #ccc;
+	margin: 1vh;
+	background: #484848;
+	color: #eee;
+}
