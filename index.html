@@ -14,10 +14,12 @@
 			<span id="info-button">&#9432;</span>
 		</div>
 		<div class="box" id="info-box" style="display: none;">
-			Please select an image in which you want to hide some information.
-			Then enter your message and download your image by clicking the target image and then <i>Save</i>.
+			Please select an image in which you want to hide some information or which already contains some hidden information.
+			After uploading you can see the content of the image. By changing this text, you can insert your own message into the image.
+			Download your image by clicking corresponding link below and then <i>Right Click &rarr; Save</i>.
 			Do not get confused when the quality of the pictures shown below is very bad - these are only previews.
-			This is why you should not use <i>Right Click &rarr; View Image</i> but rather open the link.
+			<br>
+			For more information visit <a href="https://github.com/nikolockenvitz/steganography">https://github.com/nikolockenvitz/steganography</a>
 		</div>
 		<div class="box">
 			<div>
@@ -28,23 +30,20 @@
 				Original Image
 			</div>
 			<div>
-				<a href="https://duck.com">
-					<canvas id="canvasPreviewTarget"></canvas>
-				</a>
-				<br>
-				Target Image
-			</div>
-		</div>
-		<div class="box">
-				<textarea rows="4" cols="50"
-					placeholder="Insert text which should be hidden in image here...">
-				</textarea>
-		</div>
-		<div class="box">
-			<div>
 				<canvas id="canvasPreviewCode"></canvas>
 				<br>
 				Code / Hidden Text
+			</div>
+		</div>
+		<div class="box">
+			<textarea
+				id="textarea-code"
+				rows="8" cols="64"
+			></textarea>
+		</div>
+		<div class="box">
+			<div>
+				<a id="link-target" href="" target="_blank">View Target Image</a>
 			</div>
 		</div>
 	</body>

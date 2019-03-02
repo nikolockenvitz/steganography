@@ -42,3 +42,10 @@ textarea {
 	background: #484848;
 	color: #eee;
 }
+
+a {
+	color: inherit;
+}
+a:hover {
+	color: #fff;
+}
