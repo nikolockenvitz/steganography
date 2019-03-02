@@ -9,14 +9,12 @@ var canvasPreviewOriginal;
 var canvasPreviewCode;
 
 var canvasOriginal;
-var canvasCode;
 var canvasTarget;
 
 var ctxPreviewOriginal;
 var ctxPreviewCode;
 
 var ctxOriginal;
-var ctxCode;
 var ctxTarget;
 
 var imageDataOriginal;
@@ -37,14 +35,12 @@ function setup () {
 	canvasPreviewCode = document.getElementById("canvasPreviewCode");
 	
 	canvasOriginal = document.createElement("canvas");
-	canvasCode = document.createElement("canvas");
 	canvasTarget = document.createElement("canvas");
 	
 	ctxPreviewOriginal = canvasPreviewOriginal.getContext("2d");
 	ctxPreviewCode = canvasPreviewCode.getContext("2d");
 	
 	ctxOriginal = canvasOriginal.getContext("2d");
-	ctxCode = canvasCode.getContext("2d");
 	ctxTarget = canvasTarget.getContext("2d");
 	
 	imageDataOriginal = null;
@@ -128,7 +124,7 @@ function readCodeFromOriginalImage () {
 }
 
 function showCodeAsImage () {
-	imageDataCode = ctxCode.createImageData(imageDataOriginal.width * 3, imageDataOriginal.height);
+	imageDataCode = ctxPreviewCode.createImageData(imageDataOriginal.width * 3, imageDataOriginal.height);
 	var i = 0;
 	for(var y=0; y<imageDataOriginal.height; y++) {
 		for(var x=0; x<imageDataOriginal.width; x++) {
@@ -140,8 +136,17 @@ function showCodeAsImage () {
 			}
 		}
 	}
-	ctxCode.putImageData(imageDataCode, 0, 0);
-	ctxPreviewCode.drawImage(canvasCode, 0, 0, canvasPreviewCode.width, canvasPreviewCode.height);
+	var tempCanvas = document.createElement("canvas");
+	tempCanvas.width = imageDataCode.width;
+	tempCanvas.height = imageDataCode.height;
+	tempCanvas.getContext("2d").putImageData(imageDataCode, 0, 0);
+	ctxPreviewCode.scale(canvasPreviewCode.height / imageDataCode.height, canvasPreviewCode.height / imageDataCode.height);
+	ctxPreviewCode.drawImage(tempCanvas, 0, 0);
+
+	tempCanvas.toBlob(function(blob) {
+	  var url = (URL || webkitURL).createObjectURL(blob);
+	  document.getElementById("link-code").href = url;
+	});
 }
 
 function getCode (pos) {
