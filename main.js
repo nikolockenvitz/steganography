@@ -1,24 +1,20 @@
 /* TODOs:
  *  - improve performance (especially for large images)
  *  - offer settings (fill with 0 / 1 / 0|1, ...)
+ *  - use RGBA (and/or RGB)
  *  - support Unicode
  *  - encryption, hide images, QR-Codes, ...
  */
 
 var canvasPreviewOriginal;
-var canvasPreviewCode;
 
-var canvasOriginal;
 var canvasTarget;
 
 var ctxPreviewOriginal;
-var ctxPreviewCode;
 
-var ctxOriginal;
 var ctxTarget;
 
 var imageDataOriginal;
-var imageDataCode;
 var imageDataTarget;
 
 var code;
@@ -26,36 +22,36 @@ var codeText;
 
 var imageLoader;
 
+const KEYSTROKE_TIMEOUT = 750; // time (millis) that is waited to generate target image after a keystroke
+var timeouts;
+
 window.onload = function () {
 	setup();
 }
 
 function setup () {
 	canvasPreviewOriginal = document.getElementById("canvasPreviewOriginal");
-	canvasPreviewCode = document.getElementById("canvasPreviewCode");
-	
-	canvasOriginal = document.createElement("canvas");
+
 	canvasTarget = document.createElement("canvas");
 	
 	ctxPreviewOriginal = canvasPreviewOriginal.getContext("2d");
-	ctxPreviewCode = canvasPreviewCode.getContext("2d");
 	
-	ctxOriginal = canvasOriginal.getContext("2d");
 	ctxTarget = canvasTarget.getContext("2d");
 	
 	imageDataOriginal = null;
-	imageDataCode = null;
 	imageDataTarget = null;
 	
 	code = [];
 	codeText = "";
 	
+	timeouts = [];
+	
 	imageLoader = document.getElementById("imageLoader");
 	imageLoader.addEventListener("change", handleImageUpload);
-	
+
 	textareaCode = document.getElementById("textarea-code");
-	textareaCode.addEventListener("input", updateCodeAndTarget);
-	
+	textareaCode.addEventListener("input", handleTextChange);
+
 	infoButton = document.getElementById("info-button");
 	infoButton.addEventListener("click", toggleInfoBox);
 }
@@ -69,7 +65,6 @@ function handleImageUpload (e) {
 			createPreviewOriginal(img);
 			
 			readCodeFromOriginalImage();
-			showCodeAsImage();
 		}
 		img.src = event.target.result;
 	}
@@ -77,10 +72,12 @@ function handleImageUpload (e) {
 }
 
 function setOriginalImage (img) {
-	canvasOriginal.width = img.width;
-	canvasOriginal.height = img.height;
-	ctxOriginal.drawImage(img, 0, 0);
-	imageDataOriginal = ctxOriginal.getImageData(0, 0, canvasOriginal.width, canvasOriginal.height);
+	var canvasTemp = document.createElement("canvas")
+	var ctxTemp = canvasTemp.getContext("2d");
+	canvasTemp.width = img.width;
+	canvasTemp.height = img.height;
+	ctxTemp.drawImage(img, 0, 0);
+	imageDataOriginal = ctxTemp.getImageData(0, 0, img.width, img.height);
 }
 
 function getCanvasPreviewWidth () {
@@ -92,7 +89,6 @@ function getCanvasPreviewWidth () {
 
 function createPreviewOriginal (img) {
 	canvasPreviewOriginal.width = getCanvasPreviewWidth();
-	canvasPreviewCode.width = canvasPreviewOriginal.width * 3;
 
 	ctxPreviewOriginal.drawImage(img, 0, 0, canvasPreviewOriginal.width, canvasPreviewOriginal.height);
 }
@@ -123,41 +119,28 @@ function readCodeFromOriginalImage () {
 	document.getElementById("textarea-code").value = codeText;
 }
 
-function showCodeAsImage () {
-	imageDataCode = ctxPreviewCode.createImageData(imageDataOriginal.width * 3, imageDataOriginal.height);
-	var i = 0;
-	for(var y=0; y<imageDataOriginal.height; y++) {
-		for(var x=0; x<imageDataOriginal.width; x++) {
-			for(var j=0; j<3; j++) {
-				for(var k=0; k<3; k++) {
-					imageDataCode.data[i++] = 255 * (1 - getCode(y * imageDataOriginal.width * 3 + x * 3 + j));
-				}
-				imageDataCode.data[i++] = 255;
-			}
-		}
-	}
-	var tempCanvas = document.createElement("canvas");
-	tempCanvas.width = imageDataCode.width;
-	tempCanvas.height = imageDataCode.height;
-	tempCanvas.getContext("2d").putImageData(imageDataCode, 0, 0);
-	ctxPreviewCode.scale(canvasPreviewCode.height / imageDataCode.height, canvasPreviewCode.height / imageDataCode.height);
-	ctxPreviewCode.drawImage(tempCanvas, 0, 0);
-
-	tempCanvas.toBlob(function(blob) {
-	  var url = (URL || webkitURL).createObjectURL(blob);
-	  document.getElementById("link-code").href = url;
-	});
-}
-
 function getCode (pos) {
 	if(pos >= code.length) {
-		return 0; // could also be 1 or randomly 0/1
+		return 0; // could also be 1 or randomly 0/1 or original value
 	}
 	return code[pos];
 }
 
-function updateCodeAndTarget (e) {
+function handleTextChange (e) {
+	// the new target image should not be generated with every new keystroke -> timeouts
+	for(var i in timeouts) {
+		window.clearTimeout(timeouts[i]);
+	}
+	timeouts = [];
+
+	document.getElementById("link-target").classList.add("disabled");
+	timeouts.push(window.setTimeout(updateCodeAndTarget, KEYSTROKE_TIMEOUT));
+}
+
+function updateCodeAndTarget () {
 	if(imageDataOriginal == null) { return; }
+
+	// update code
 	code = [];
 	codeText = document.getElementById("textarea-code").value;
 	for(var i=0; i<codeText.length; i++) {
@@ -172,8 +155,7 @@ function updateCodeAndTarget (e) {
 			}
 		}
 	}
-	showCodeAsImage();
-	
+
 	// update target
 	canvasTarget.width = imageDataOriginal.width;
 	canvasTarget.height = imageDataOriginal.height;
@@ -185,14 +167,16 @@ function updateCodeAndTarget (e) {
 			for(var j=0; j<3; j++) {
 				imageDataTarget.data[i++] = 2*Math.floor(colors[j]/2) + getCode(y * imageDataOriginal.width * 3 + x * 3 + j);
 			}
-			imageDataTarget.data[i++] = colors[3];
+			imageDataTarget.data[i++] = 255;
 		}
 	}
 	ctxTarget.putImageData(imageDataTarget, 0, 0);
-	
+
+	// update link
 	canvasTarget.toBlob(function(blob) {
-	  var url = (URL || webkitURL).createObjectURL(blob);
-	  document.getElementById("link-target").href = url;
+		var url = (URL || webkitURL).createObjectURL(blob);
+		document.getElementById("link-target").href = url;
+		document.getElementById("link-target").classList.remove("disabled");
 	});
 }
 
@@ -207,15 +191,6 @@ function readPixel (x, y, imageData) {
 			imageData.data[pos+1],
 			imageData.data[pos+2],
 			imageData.data[pos+3]];
-}
-
-function writePixel (x, y, r, g, b, imageData) {
-	imageData = (typeof imageData !== 'undefined') ? imageData : imageDataOriginal;
-	pos = getPixelPosition(x, y, imageData);
-	imageData.data[pos] = r;
-	imageData.data[pos+1] = g;
-	imageData.data[pos+2] = b;
-	imageData.data[pos+3] = 255;
 }
 
 

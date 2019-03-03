@@ -31,7 +31,7 @@ div {
 }
 
 canvas {
-	height: 200px;
+	height: 300px;
 	border: 1px solid #ccc;
 	margin: 1vh;
 }
@@ -48,4 +48,19 @@ a {
 }
 a:hover {
 	color: #fff;
+}
+
+a.button {
+	background-color: #66ad57;
+	border: none;
+	color: #fff;
+	padding: 15px 32px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	cursor: pointer;
+}
+a.disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
 }
